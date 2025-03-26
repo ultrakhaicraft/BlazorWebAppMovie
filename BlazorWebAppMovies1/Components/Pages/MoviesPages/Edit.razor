@@ -1,0 +1,112 @@
+﻿@page "/movies/edit"
+@using Microsoft.EntityFrameworkCore
+@using BlazorWebAppMovies1.Models
+@inject IDbContextFactory<BlazorWebAppMovies1.Data.BlazorWebAppMovies1Context> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Movies</h2>
+<hr />
+@if (Movies is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Movies" OnValidSubmit="UpdateMovies" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Movies.Id" value="@Movies.Id" />
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title:</label>
+                    <InputText id="title" @bind-Value="Movies.Title" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => Movies.Title" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="releasedate" class="form-label">ReleaseDate:</label>
+                    <InputDate id="releasedate" @bind-Value="Movies.ReleaseDate" class="form-control" />
+                    <ValidationMessage For="() => Movies.ReleaseDate" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="genreid" class="form-label">Genre Name:</label>
+                    <InputSelect id="genreid" @bind-Value="Movies.GenreId" class="form-control">
+                        <option value="">--Select Genre--</option>
+                        @foreach (var genre in Genres)
+                        {
+                            <option value="@genre.Id">@genre.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Movies.GenreId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="price" class="form-label">Price:</label>
+                    <InputNumber id="price" @bind-Value="Movies.Price" class="form-control" />
+                    <ValidationMessage For="() => Movies.Price" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/movies">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Movies? Movies { get; set; }
+
+    private List<Genre> Genres { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Genres = await context.Genre.ToListAsync();
+        Movies ??= await context.Movies.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Movies is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    
+    private async Task UpdateMovies()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Movies!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!MoviesExists(Movies!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/movies");
+    }
+
+    private bool MoviesExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Movies.Any(e => e.Id == id);
+    }
+}

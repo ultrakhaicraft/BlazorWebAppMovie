@@ -1,0 +1,72 @@
+﻿@page "/movies/create"
+@using Microsoft.EntityFrameworkCore
+@using BlazorWebAppMovies1.Models
+@inject IDbContextFactory<BlazorWebAppMovies1.Data.BlazorWebAppMovies1Context> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Movies</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="@Movies" OnValidSubmit="AddMovies" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label> 
+                <InputText id="title" @bind-Value="Movies.Title" class="form-control" aria-required="true"/> 
+                <ValidationMessage For="() => Movies.Title" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="releasedate" class="form-label">ReleaseDate:</label> 
+                <InputDate id="releasedate" @bind-Value="Movies.ReleaseDate" class="form-control" /> 
+                <ValidationMessage For="() => Movies.ReleaseDate" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="genreid" class="form-label">Genre Name:</label> 
+                <InputSelect id="genreid" @bind-Value="Movies.GenreId" class="form-control">
+			    <option value="">--Select Genre--</option>
+                    @foreach (var genre in Genres)
+                    {
+				<option value="@genre.Id">@genre.Name</option>
+                }
+                </InputSelect>
+                <ValidationMessage For="() => Movies.GenreId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="price" class="form-label">Price:</label> 
+                <InputNumber id="price" @bind-Value="Movies.Price" class="form-control" /> 
+                <ValidationMessage For="() => Movies.Price" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/movies">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Movies Movies { get; set; } = new();
+
+    private List<Genre> Genres { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Genres = await context.Genre.ToListAsync();
+    }
+    
+    private async Task AddMovies()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Movies.Add(Movies);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/movies");
+    }
+}
