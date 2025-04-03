@@ -33,22 +33,4 @@
     }
 </div>
 
-@code {
-    private Movies? movies;
-    private Genre genre;
 
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        using var context = DbFactory.CreateDbContext();
-        movies = await context.Movies.FirstOrDefaultAsync(m => m.Id == Id);
-        if (movies is null)
-        {
-            NavigationManager.NavigateTo("notfound");
-        }else{
-            genre = await context.Genre.FirstOrDefaultAsync(mbox => mbox.Id == movies.GenreId);
-        } 
-    }
-}
