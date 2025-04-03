@@ -27,13 +27,4 @@
     </TemplateColumn>
 </QuickGrid>
 
-@code {
-    private BlazorWebAppMovies1Context context = default!;
 
-    protected override void OnInitialized()
-    {
-        context = DbFactory.CreateDbContext();
-    }
-
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
-}
